@@ -3,7 +3,7 @@ import { mockGlobal, getEvent, sleep, mockKV, mockManifest } from '../mocks'
 import { getAssetFromKV, mapRequestToAsset } from '../index'
 import { KVError } from '../types'
 
-test('getAssetFromKV return correct val from KV and default caching', async t => {
+test('getAssetFromKV return correct val from KV and default caching', async (t) => {
   mockGlobal()
   const event = getEvent(new Request('https://blah.com/key1.txt'))
   const res = await getAssetFromKV(event)
@@ -17,14 +17,14 @@ test('getAssetFromKV return correct val from KV and default caching', async t =>
     t.fail('Response was undefined')
   }
 })
-test('getAssetFromKV evaluated the file matching the extensionless path first /client/ -> client', async t => {
+test('getAssetFromKV evaluated the file matching the extensionless path first /client/ -> client', async (t) => {
   mockGlobal()
   const event = getEvent(new Request(`https://foo.com/client/`))
   const res = await getAssetFromKV(event)
   t.is(await res.text(), 'important file')
   t.true(res.headers.get('content-type').includes('text'))
 })
-test('getAssetFromKV evaluated the file matching the extensionless path first /client -> client', async t => {
+test('getAssetFromKV evaluated the file matching the extensionless path first /client -> client', async (t) => {
   mockGlobal()
   const event = getEvent(new Request(`https://foo.com/client`))
   const res = await getAssetFromKV(event)
@@ -32,7 +32,7 @@ test('getAssetFromKV evaluated the file matching the extensionless path first /c
   t.true(res.headers.get('content-type').includes('text'))
 })
 
-test('getAssetFromKV if not in asset manifest still returns nohash.txt', async t => {
+test('getAssetFromKV if not in asset manifest still returns nohash.txt', async (t) => {
   mockGlobal()
   const event = getEvent(new Request('https://blah.com/nohash.txt'))
   const res = await getAssetFromKV(event)
@@ -45,14 +45,14 @@ test('getAssetFromKV if not in asset manifest still returns nohash.txt', async t
   }
 })
 
-test('getAssetFromKV if no asset manifest /client -> client fails', async t => {
+test('getAssetFromKV if no asset manifest /client -> client fails', async (t) => {
   mockGlobal()
   const event = getEvent(new Request(`https://foo.com/client`))
   const error: KVError = await t.throwsAsync(getAssetFromKV(event, { ASSET_MANIFEST: {} }))
   t.is(error.status, 404)
 })
 
-test('getAssetFromKV if sub/ -> sub/index.html served', async t => {
+test('getAssetFromKV if sub/ -> sub/index.html served', async (t) => {
   mockGlobal()
   const event = getEvent(new Request(`https://foo.com/sub`))
   const res = await getAssetFromKV(event)
@@ -63,7 +63,7 @@ test('getAssetFromKV if sub/ -> sub/index.html served', async t => {
   }
 })
 
-test('getAssetFromKV gets index.html by default for / requests', async t => {
+test('getAssetFromKV gets index.html by default for / requests', async (t) => {
   mockGlobal()
   const event = getEvent(new Request('https://blah.com/'))
   const res = await getAssetFromKV(event)
@@ -76,7 +76,7 @@ test('getAssetFromKV gets index.html by default for / requests', async t => {
   }
 })
 
-test('getAssetFromKV non ASCII path support', async t => {
+test('getAssetFromKV non ASCII path support', async (t) => {
   mockGlobal()
   const event = getEvent(new Request('https://blah.com/测试.html'))
   const res = await getAssetFromKV(event)
@@ -88,7 +88,7 @@ test('getAssetFromKV non ASCII path support', async t => {
   }
 })
 
-test('getAssetFromKV supports browser percent encoded URLs', async t => {
+test('getAssetFromKV supports browser percent encoded URLs', async (t) => {
   mockGlobal()
   const event = getEvent(new Request('https://example.com/%not-really-percent-encoded.html'))
   const res = await getAssetFromKV(event)
@@ -100,7 +100,7 @@ test('getAssetFromKV supports browser percent encoded URLs', async t => {
   }
 })
 
-test('getAssetFromKV supports user percent encoded URLs', async t => {
+test('getAssetFromKV supports user percent encoded URLs', async (t) => {
   mockGlobal()
   const event = getEvent(new Request('https://blah.com/%2F.html'))
   const res = await getAssetFromKV(event)
@@ -112,7 +112,7 @@ test('getAssetFromKV supports user percent encoded URLs', async t => {
   }
 })
 
-test('getAssetFromKV only decode URL when necessary', async t => {
+test('getAssetFromKV only decode URL when necessary', async (t) => {
   mockGlobal()
   const event1 = getEvent(new Request('https://blah.com/%E4%BD%A0%E5%A5%BD.html'))
   const event2 = getEvent(new Request('https://blah.com/你好.html'))
@@ -127,7 +127,7 @@ test('getAssetFromKV only decode URL when necessary', async t => {
   }
 })
 
-test('getAssetFromKV custom key modifier', async t => {
+test('getAssetFromKV custom key modifier', async (t) => {
   mockGlobal()
   const event = getEvent(new Request('https://blah.com/docs/sub/blah.png'))
 
@@ -148,11 +148,11 @@ test('getAssetFromKV custom key modifier', async t => {
   }
 })
 
-test('getAssetFromKV when setting browser caching', async t => {
+test('getAssetFromKV when setting browser caching', async (t) => {
   mockGlobal()
   const event = getEvent(new Request('https://blah.com/'))
 
-  const res = await getAssetFromKV(event, { cacheControl: { browserTTL: 22 } })
+  const res = await getAssetFromKV(event, { cacheControl: { browser: 'max-age=22' } })
 
   if (res) {
     t.is(res.headers.get('cache-control'), 'max-age=22')
@@ -161,15 +161,15 @@ test('getAssetFromKV when setting browser caching', async t => {
   }
 })
 
-test('getAssetFromKV when setting custom cache setting', async t => {
+test('getAssetFromKV when setting custom cache setting', async (t) => {
   mockGlobal()
   const event1 = getEvent(new Request('https://blah.com/'))
   const event2 = getEvent(new Request('https://blah.com/key1.png?blah=34'))
   const cacheOnlyPngs = (req: Request) => {
     if (new URL(req.url).pathname.endsWith('.png'))
       return {
-        browserTTL: 720,
-        edgeTTL: 720,
+        browser: 'max-age=720',
+        edge: 'max-age=720',
       }
     else
       return {
@@ -189,18 +189,22 @@ test('getAssetFromKV when setting custom cache setting', async t => {
     t.fail('Response was undefined')
   }
 })
-test('getAssetFromKV caches on two sequential requests', async t => {
+test('getAssetFromKV caches on two sequential requests', async (t) => {
   mockGlobal()
   const resourceKey = 'cache.html'
   const resourceVersion = JSON.parse(mockManifest())[resourceKey]
   const event1 = getEvent(new Request(`https://blah.com/${resourceKey}`))
-  const event2 = getEvent(new Request(`https://blah.com/${resourceKey}`, {
-    headers: {
-      'if-none-match': resourceVersion
-    }
-  }))
+  const event2 = getEvent(
+    new Request(`https://blah.com/${resourceKey}`, {
+      headers: {
+        'if-none-match': resourceVersion,
+      },
+    }),
+  )
 
-  const res1 = await getAssetFromKV(event1, { cacheControl: { edgeTTL: 720, browserTTL: 720 } })
+  const res1 = await getAssetFromKV(event1, {
+    cacheControl: { edge: 'max-age=720', browser: 'max-age=720' },
+  })
   await sleep(1)
   const res2 = await getAssetFromKV(event2)
 
@@ -212,18 +216,20 @@ test('getAssetFromKV caches on two sequential requests', async t => {
     t.fail('Response was undefined')
   }
 })
-test('getAssetFromKV does not store max-age on two sequential requests', async t => {
+test('getAssetFromKV does not store max-age on two sequential requests', async (t) => {
   mockGlobal()
   const resourceKey = 'cache.html'
   const resourceVersion = JSON.parse(mockManifest())[resourceKey]
   const event1 = getEvent(new Request(`https://blah.com/${resourceKey}`))
-  const event2 = getEvent(new Request(`https://blah.com/${resourceKey}`, {
-    headers: {
-      'if-none-match': resourceVersion
-    }
-  }))
+  const event2 = getEvent(
+    new Request(`https://blah.com/${resourceKey}`, {
+      headers: {
+        'if-none-match': resourceVersion,
+      },
+    }),
+  )
 
-  const res1 = await getAssetFromKV(event1, { cacheControl: { edgeTTL: 720 } })
+  const res1 = await getAssetFromKV(event1, { cacheControl: { edge: 'max-age=720' } })
   await sleep(100)
   const res2 = await getAssetFromKV(event2)
 
@@ -237,7 +243,7 @@ test('getAssetFromKV does not store max-age on two sequential requests', async t
   }
 })
 
-test('getAssetFromKV does not cache on Cloudflare when bypass cache set', async t => {
+test('getAssetFromKV does not cache on Cloudflare when bypass cache set', async (t) => {
   mockGlobal()
   const event = getEvent(new Request('https://blah.com/'))
 
@@ -251,7 +257,7 @@ test('getAssetFromKV does not cache on Cloudflare when bypass cache set', async 
   }
 })
 
-test('getAssetFromKV with no trailing slash on root', async t => {
+test('getAssetFromKV with no trailing slash on root', async (t) => {
   mockGlobal()
   const event = getEvent(new Request('https://blah.com'))
   const res = await getAssetFromKV(event)
@@ -262,7 +268,7 @@ test('getAssetFromKV with no trailing slash on root', async t => {
   }
 })
 
-test('getAssetFromKV with no trailing slash on a subdirectory', async t => {
+test('getAssetFromKV with no trailing slash on a subdirectory', async (t) => {
   mockGlobal()
   const event = getEvent(new Request('https://blah.com/sub/blah.png'))
   const res = await getAssetFromKV(event)
@@ -273,19 +279,19 @@ test('getAssetFromKV with no trailing slash on a subdirectory', async t => {
   }
 })
 
-test('getAssetFromKV no result throws an error', async t => {
+test('getAssetFromKV no result throws an error', async (t) => {
   mockGlobal()
   const event = getEvent(new Request('https://blah.com/random'))
   const error: KVError = await t.throwsAsync(getAssetFromKV(event))
   t.is(error.status, 404)
 })
-test('getAssetFromKV TTls set to null should not cache on browser or edge', async t => {
+test('getAssetFromKV TTls set to null should not cache on browser or edge', async (t) => {
   mockGlobal()
   const event = getEvent(new Request('https://blah.com/'))
 
-  const res1 = await getAssetFromKV(event, { cacheControl: { browserTTL: null, edgeTTL: null } })
+  const res1 = await getAssetFromKV(event, { cacheControl: { browser: null, edge: null } })
   await sleep(100)
-  const res2 = await getAssetFromKV(event, { cacheControl: { browserTTL: null, edgeTTL: null } })
+  const res2 = await getAssetFromKV(event, { cacheControl: { browser: null, edge: null } })
 
   if (res1 && res2) {
     t.is(res1.headers.get('cf-cache-status'), null)
@@ -296,7 +302,7 @@ test('getAssetFromKV TTls set to null should not cache on browser or edge', asyn
     t.fail('Response was undefined')
   }
 })
-test('getAssetFromKV passing in a custom NAMESPACE serves correct asset', async t => {
+test('getAssetFromKV passing in a custom NAMESPACE serves correct asset', async (t) => {
   mockGlobal()
   let CUSTOM_NAMESPACE = mockKV({
     'key1.123HASHBROWN.txt': 'val1',
@@ -311,7 +317,7 @@ test('getAssetFromKV passing in a custom NAMESPACE serves correct asset', async 
     t.fail('Response was undefined')
   }
 })
-test('getAssetFromKV when custom namespace without the asset should fail', async t => {
+test('getAssetFromKV when custom namespace without the asset should fail', async (t) => {
   mockGlobal()
   let CUSTOM_NAMESPACE = mockKV({
     'key5.123HASHBROWN.txt': 'customvalu',
@@ -323,7 +329,7 @@ test('getAssetFromKV when custom namespace without the asset should fail', async
   )
   t.is(error.status, 404)
 })
-test('getAssetFromKV when namespace not bound fails', async t => {
+test('getAssetFromKV when namespace not bound fails', async (t) => {
   mockGlobal()
   var MY_CUSTOM_NAMESPACE = undefined
   Object.assign(global, { MY_CUSTOM_NAMESPACE })
@@ -335,18 +341,20 @@ test('getAssetFromKV when namespace not bound fails', async t => {
   t.is(error.status, 500)
 })
 
-test('getAssetFromKV when if-none-match === etag and etag === pathKey in manifest, should revalidate', async t => {
+test('getAssetFromKV when if-none-match === etag and etag === pathKey in manifest, should revalidate', async (t) => {
   mockGlobal()
   const resourceKey = 'key1.png'
   const resourceVersion = JSON.parse(mockManifest())[resourceKey]
   const event1 = getEvent(new Request(`https://blah.com/${resourceKey}`))
-  const event2 = getEvent(new Request(`https://blah.com/${resourceKey}`, {
-    headers: {
-      'if-none-match': resourceVersion
-    }
-  }))
+  const event2 = getEvent(
+    new Request(`https://blah.com/${resourceKey}`, {
+      headers: {
+        'if-none-match': resourceVersion,
+      },
+    }),
+  )
 
-  const res1 = await getAssetFromKV(event1, { cacheControl: { edgeTTL: 720 } })
+  const res1 = await getAssetFromKV(event1, { cacheControl: { edge: 'max-age=720' } })
   await sleep(100)
   const res2 = await getAssetFromKV(event2)
 
@@ -359,23 +367,23 @@ test('getAssetFromKV when if-none-match === etag and etag === pathKey in manifes
   }
 })
 
-test('getAssetFromKV when etag and if-none-match are present but if-none-match !== etag, should bypass cache', async t => {
+test('getAssetFromKV when etag and if-none-match are present but if-none-match !== etag, should bypass cache', async (t) => {
   mockGlobal()
   const resourceKey = 'key1.png'
   const resourceVersion = JSON.parse(mockManifest())[resourceKey]
   const req1 = new Request(`https://blah.com/${resourceKey}`, {
     headers: {
-      'if-none-match': resourceVersion
-    }
+      'if-none-match': resourceVersion,
+    },
   })
   const req2 = new Request(`https://blah.com/${resourceKey}`, {
     headers: {
-      'if-none-match': resourceVersion + "another-version"
-    }
+      'if-none-match': resourceVersion + 'another-version',
+    },
   })
   const event = getEvent(req1)
   const event2 = getEvent(req2)
-  const res1 = await getAssetFromKV(event, { cacheControl: { edgeTTL: 720 } })
+  const res1 = await getAssetFromKV(event, { cacheControl: { edge: 'max-age=720' } })
   const res2 = await getAssetFromKV(event)
   const res3 = await getAssetFromKV(event2)
   if (res1 && res2 && res3) {
@@ -388,10 +396,10 @@ test('getAssetFromKV when etag and if-none-match are present but if-none-match !
     t.fail('Response was undefined')
   }
 })
-test('getAssetFromKV if-none-match not sent but resource in cache, should return hit', async t => {
+test('getAssetFromKV if-none-match not sent but resource in cache, should return hit', async (t) => {
   const resourceKey = 'cache.html'
   const event = getEvent(new Request(`https://blah.com/${resourceKey}`))
-  const res1 = await getAssetFromKV(event, { cacheControl: { edgeTTL: 720 } })
+  const res1 = await getAssetFromKV(event, { cacheControl: { edge: 'max-age=720' } })
   await sleep(1)
   const res2 = await getAssetFromKV(event)
   if (res1 && res2) {

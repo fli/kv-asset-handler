@@ -1,13 +1,13 @@
 export type CacheControl = {
-  browserTTL: number
-  edgeTTL: number
+  browser: string
+  edge: string
   bypassCache: boolean
 }
 export type Options = {
   cacheControl: ((req: Request) => Partial<CacheControl>) | Partial<CacheControl>
   ASSET_NAMESPACE: any
   ASSET_MANIFEST: Object | string
-  mapRequestToAsset: (req: Request) => Request,
+  mapRequestToAsset: (req: Request) => Request
   defaultMimeType: string
 }
 

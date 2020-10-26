@@ -54,8 +54,8 @@ function serveSinglePageApp(request: Request): Request {
 }
 
 const defaultCacheControl: CacheControl = {
-  browserTTL: null,
-  edgeTTL: 2 * 60 * 60 * 24, // 2 days
+  browser: null,
+  edge: `max-age=${2 * 60 * 60 * 24}`, // 2 days
   bypassCache: false, // do not bypass Cloudflare's cache
 }
 
@@ -64,7 +64,7 @@ const defaultCacheControl: CacheControl = {
  * the response
  *
  * @param {FetchEvent} event the fetch event of the triggered request
- * @param {{mapRequestToAsset: (string: Request) => Request, cacheControl: {bypassCache:boolean, edgeTTL: number, browserTTL:number}, ASSET_NAMESPACE: any, ASSET_MANIFEST:any}} [options] configurable options
+ * @param {{mapRequestToAsset: (string: Request) => Request, cacheControl: {bypassCache:boolean, edge: string, browser:string}, ASSET_NAMESPACE: any, ASSET_MANIFEST:any}} [options] configurable options
  * @param {CacheControl} [options.cacheControl] determine how to cache on Cloudflare and the browser
  * @param {typeof(options.mapRequestToAsset)} [options.mapRequestToAsset]  maps the path of incoming request to the request pathKey to look up
  * @param {Object | string} [options.ASSET_NAMESPACE] the binding to the namespace that script references
@@ -85,9 +85,10 @@ const getAssetFromKV = async (event: FetchEvent, options?: Partial<Options>): Pr
 
   const request = event.request
   const ASSET_NAMESPACE = options.ASSET_NAMESPACE
-  const ASSET_MANIFEST = typeof (options.ASSET_MANIFEST) === 'string'
-    ? JSON.parse(options.ASSET_MANIFEST)
-    : options.ASSET_MANIFEST
+  const ASSET_MANIFEST =
+    typeof options.ASSET_MANIFEST === 'string'
+      ? JSON.parse(options.ASSET_MANIFEST)
+      : options.ASSET_MANIFEST
 
   if (typeof ASSET_NAMESPACE === 'undefined') {
     throw new InternalError(`there is no KV namespace bound to the script`)
@@ -104,7 +105,7 @@ const getAssetFromKV = async (event: FetchEvent, options?: Partial<Options>): Pr
   if (ASSET_MANIFEST[rawPathKey]) {
     requestKey = request
   } else if (ASSET_MANIFEST[decodeURIComponent(rawPathKey)]) {
-    pathIsEncoded = true;
+    pathIsEncoded = true
     requestKey = request
   } else {
     requestKey = options.mapRequestToAsset(request)
@@ -120,7 +121,7 @@ const getAssetFromKV = async (event: FetchEvent, options?: Partial<Options>): Pr
   const cache = caches.default
   let mimeType = mime.getType(pathKey) || options.defaultMimeType
   if (mimeType.startsWith('text')) {
-      mimeType += '; charset=utf-8'
+    mimeType += '; charset=utf-8'
   }
 
   let shouldEdgeCache = false // false if storing in KV by raw file path i.e. no hash
@@ -155,13 +156,11 @@ const getAssetFromKV = async (event: FetchEvent, options?: Partial<Options>): Pr
   // override shouldEdgeCache if options say to bypassCache
   if (
     options.cacheControl.bypassCache ||
-    options.cacheControl.edgeTTL === null ||
+    options.cacheControl.edge === null ||
     request.method == 'HEAD'
   ) {
     shouldEdgeCache = false
   }
-  // only set max-age if explicitly passed in a number as an arg
-  const shouldSetBrowserCache = typeof options.cacheControl.browserTTL === 'number'
 
   let response = null
   if (shouldEdgeCache) {
@@ -185,11 +184,10 @@ const getAssetFromKV = async (event: FetchEvent, options?: Partial<Options>): Pr
       request.headers.get('if-none-match') === `${pathKey}`,
     ].every(Boolean)
 
-
     if (shouldRevalidate) {
       // fixes issue #118
       if (response.body && 'cancel' in Object.getPrototypeOf(response.body)) {
-        response.body.cancel();
+        response.body.cancel()
         console.log('Body exists and environment supports readable streams. Body cancelled')
       } else {
         console.log('Environment doesnt support readable streams')
@@ -220,14 +218,14 @@ const getAssetFromKV = async (event: FetchEvent, options?: Partial<Options>): Pr
         response.headers.set('etag', `${pathKey}`)
       }
       // determine Cloudflare cache behavior
-      response.headers.set('Cache-Control', `max-age=${options.cacheControl.edgeTTL}`)
+      response.headers.set('Cache-Control', options.cacheControl.edge)
       event.waitUntil(cache.put(cacheKey, response.clone()))
       response.headers.set('CF-Cache-Status', 'MISS')
     }
   }
   response.headers.set('Content-Type', mimeType)
-  if (shouldSetBrowserCache) {
-    response.headers.set('Cache-Control', `max-age=${options.cacheControl.browserTTL}`)
+  if (options.cacheControl.browser) {
+    response.headers.set('Cache-Control', options.cacheControl.browser)
   } else {
     response.headers.delete('Cache-Control')
   }
