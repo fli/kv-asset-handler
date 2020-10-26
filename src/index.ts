@@ -120,7 +120,7 @@ const getAssetFromKV = async (event: FetchEvent, options?: Partial<Options>): Pr
   // @ts-ignore
   const cache = caches.default
   let mimeType = mime.getType(pathKey) || options.defaultMimeType
-  if (mimeType.startsWith('text')) {
+  if (mimeType.startsWith('text') || mimeType === 'application/javascript') {
     mimeType += '; charset=utf-8'
   }
 
